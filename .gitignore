@@ -23,3 +23,7 @@ dist-ssr
 *.sln
 *.sw?
 .env
+
+# Reportes generados por la tarea programada (scripts/repo-report.ps1).
+# Son locales de cada integrante: no se versionan.
+reports/
