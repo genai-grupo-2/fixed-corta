@@ -4,7 +4,8 @@
   "description": "Acortador interno de URLs",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "test": "node --test --test-isolation=none"
   },
   "engines": {
     "node": ">=20"
