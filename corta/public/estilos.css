@@ -132,6 +132,7 @@ button {
 
 button:hover { background: var(--acento-oscuro); transform: translateY(-1px); }
 button:active { transform: translateY(0); }
+button:disabled { cursor: wait; opacity: 0.7; transform: none; }
 
 .resultado {
   display: flex;
@@ -218,6 +219,18 @@ button:active { transform: translateY(0); }
   font-weight: 650;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+a.dato { color: var(--acento-oscuro); }
+
+.mensaje-error {
+  margin-top: 18px;
+  padding: 13px 15px;
+  border: 1px solid #e4b7a7;
+  border-radius: 12px;
+  background: #fae9e1;
+  color: #8d3f2d;
+  font-size: 0.9rem;
 }
 
 .pie {
