@@ -7,23 +7,39 @@
   <link rel="stylesheet" href="estilos.css">
 </head>
 <body>
-  <main class="tarjeta">
-    <img src="logo (1).png" alt="Corta" class="logo">
-    <h1>Corta</h1>
-    <p class="sub">El acortador de URLs interno</p>
+  <main class="contenedor">
+    <header class="marca">
+      <img src="logo.png" alt="" class="logo">
+      <span>Corta</span>
+    </header>
 
-    <form id="form">
-      <input type="url" id="url" placeholder="https://una-url-muy-larga..." required>
-      <button type="submit">Acortar</button>
-    </form>
+    <section class="tarjeta">
+      <div class="encabezado">
+        <span class="eyebrow">Simple y rápido</span>
+        <h1>CORTA</h1>
+        <p class="bajada">El acortador de URLs interno</p>
+        <p class="sub">Pegá una URL larga y convertila en un enlace fácil de compartir.</p>
+      </div>
 
-    <div id="resultado" class="oculto">
-      <p>Tu link corto:</p>
-      <a id="link-corto" href="#" target="_blank"></a>
-      <button id="copiar" type="button">Copiar</button>
-    </div>
+      <form id="form">
+        <label class="sr-only" for="url">URL para acortar</label>
+        <input type="url" id="url" placeholder="https://tu-url-larga.com" required>
+        <button type="submit">Acortar link</button>
+      </form>
 
-    <p class="pie"><a href="stats.html">Ver estadísticas de un link</a></p>
+      <div id="resultado" class="resultado oculto" aria-live="polite">
+        <div>
+          <span class="resultado-etiqueta">Tu nuevo enlace</span>
+          <a id="link-corto" href="#" target="_blank" rel="noopener"></a>
+        </div>
+        <button id="copiar" class="boton-secundario" type="button">Copiar</button>
+      </div>
+    </section>
+
+    <footer class="pie">
+      <span>¿Ya tenés un enlace?</span>
+      <a href="stats.html">Consultar estadísticas <span aria-hidden="true">→</span></a>
+    </footer>
   </main>
 
   <script>
