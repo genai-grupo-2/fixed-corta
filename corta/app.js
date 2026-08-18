@@ -37,6 +37,14 @@ function crearApp({ dbFile = path.join(__dirname, 'links.json') } = {}) {
     return res.json({ codigo, corta: `/${codigo}` });
   });
 
+  app.get('/api/links', (req, res) => {
+    const links = leerLinks()
+      .slice()
+      .sort((a, b) => new Date(b.creado) - new Date(a.creado));
+
+    return res.json(links);
+  });
+
   app.get('/api/links/:codigo/stats', (req, res) => {
     const links = leerLinks();
     const link = links.find((item) => item.codigo === req.params.codigo);

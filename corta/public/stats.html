@@ -109,6 +109,12 @@
         boton.textContent = 'Consultar';
       }
     });
+
+    const codigoInicial = new URLSearchParams(window.location.search).get('codigo');
+    if (codigoInicial) {
+      document.getElementById('codigo').value = codigoInicial;
+      formulario.requestSubmit();
+    }
   </script>
 </body>
 </html>

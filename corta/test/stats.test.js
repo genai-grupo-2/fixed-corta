@@ -65,3 +65,24 @@ test('responde 404 JSON cuando el código no existe', async (t) => {
     assert.deepEqual(await respuesta.json(), { error: 'No existe ese link' });
   });
 });
+
+test('lista el historial del enlace más nuevo al más antiguo', async (t) => {
+  const { archivo, directorio } = crearBaseTemporal();
+  const links = JSON.parse(fs.readFileSync(archivo, 'utf8'));
+  links.push({
+    codigo: 'nuevo',
+    url: 'https://ejemplo.com/nuevo',
+    clicks: 1,
+    creado: '2026-04-10T10:00:00.000Z'
+  });
+  fs.writeFileSync(archivo, JSON.stringify(links));
+  t.after(() => fs.rmSync(directorio, { recursive: true, force: true }));
+
+  await conServidor(crearApp({ dbFile: archivo }), async (origen) => {
+    const respuesta = await fetch(`${origen}/api/links`);
+    const historial = await respuesta.json();
+
+    assert.equal(respuesta.status, 200);
+    assert.deepEqual(historial.map((link) => link.codigo), ['nuevo', 'a3k']);
+  });
+});

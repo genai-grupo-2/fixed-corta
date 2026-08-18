@@ -7,13 +7,14 @@
   <link rel="stylesheet" href="estilos.css">
 </head>
 <body>
-  <main class="contenedor">
+  <main class="contenedor contenedor-inicio">
     <header class="marca">
       <img src="logo.png" alt="" class="logo">
       <span>Corta</span>
     </header>
 
-    <section class="tarjeta">
+    <div class="paneles">
+    <section class="tarjeta tarjeta-acortador">
       <div class="encabezado">
         <span class="eyebrow">Simple y rápido</span>
         <h1>CORTA</h1>
@@ -36,6 +37,20 @@
       </div>
     </section>
 
+    <aside class="tarjeta historial" aria-labelledby="titulo-historial">
+      <div class="historial-encabezado">
+        <div>
+          <span class="eyebrow">Tus enlaces</span>
+          <h2 id="titulo-historial">Historial</h2>
+        </div>
+        <span id="cantidad-links" class="contador" aria-label="Cantidad de enlaces">0</span>
+      </div>
+      <div id="lista-historial" class="lista-historial" aria-live="polite">
+        <p class="historial-vacio">Todavía no acortaste ningún enlace.</p>
+      </div>
+    </aside>
+    </div>
+
     <footer class="pie">
       <span>¿Ya tenés un enlace?</span>
       <a href="stats.html">Consultar estadísticas <span aria-hidden="true">→</span></a>
@@ -46,6 +61,69 @@
     const form = document.getElementById('form');
     const resultado = document.getElementById('resultado');
     const linkCorto = document.getElementById('link-corto');
+    const listaHistorial = document.getElementById('lista-historial');
+    const cantidadLinks = document.getElementById('cantidad-links');
+
+    function fechaCorta(fecha) {
+      return new Intl.DateTimeFormat('es-AR', {
+        day: '2-digit', month: 'short', year: 'numeric'
+      }).format(new Date(fecha));
+    }
+
+    function crearItemHistorial(link) {
+      const item = document.createElement('article');
+      item.className = 'historial-item';
+
+      const datos = document.createElement('div');
+      datos.className = 'historial-datos';
+
+      const corto = document.createElement('a');
+      corto.className = 'historial-corto';
+      corto.href = `/${encodeURIComponent(link.codigo)}`;
+      corto.target = '_blank';
+      corto.rel = 'noopener';
+      corto.textContent = `${window.location.host}/${link.codigo}`;
+
+      const original = document.createElement('span');
+      original.className = 'historial-original';
+      original.title = link.url;
+      original.textContent = link.url;
+
+      const meta = document.createElement('div');
+      meta.className = 'historial-meta';
+      meta.textContent = `${link.clicks} ${link.clicks === 1 ? 'click' : 'clicks'} · ${fechaCorta(link.creado)}`;
+
+      const estadisticas = document.createElement('a');
+      estadisticas.className = 'historial-stats';
+      estadisticas.href = `stats.html?codigo=${encodeURIComponent(link.codigo)}`;
+      estadisticas.textContent = 'Ver estadísticas';
+
+      datos.append(corto, original, meta);
+      item.append(datos, estadisticas);
+      return item;
+    }
+
+    async function cargarHistorial() {
+      try {
+        const res = await fetch('/api/links');
+        if (!res.ok) throw new Error('No se pudo cargar el historial');
+        const links = await res.json();
+        cantidadLinks.textContent = links.length;
+        listaHistorial.replaceChildren();
+
+        if (!links.length) {
+          const vacio = document.createElement('p');
+          vacio.className = 'historial-vacio';
+          vacio.textContent = 'Todavía no acortaste ningún enlace.';
+          listaHistorial.append(vacio);
+          return;
+        }
+
+        links.forEach((link) => listaHistorial.append(crearItemHistorial(link)));
+      } catch {
+        listaHistorial.textContent = 'No pudimos cargar el historial.';
+      }
+    }
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -60,11 +138,15 @@
       linkCorto.textContent = corta;
       linkCorto.href = corta;
       resultado.classList.remove('oculto');
+      document.getElementById('url').value = '';
+      await cargarHistorial();
     });
 
     document.getElementById('copiar').addEventListener('click', () => {
       navigator.clipboard.writeText(linkCorto.textContent);
     });
+
+    cargarHistorial();
   </script>
 </body>
 </html>
