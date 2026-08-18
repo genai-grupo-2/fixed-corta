@@ -161,9 +161,31 @@ Reconectar: `serviceConnect(id, input: { repo, branch })`.
 
 ---
 
-## 6. Limitaciones conocidas del entorno
+## 6. Tests
 
-- El **CLI de Railway no está instalado** en esta máquina (`railway` no está en el PATH), y no hay `RAILWAY_TOKEN` ni `RAILWAY_API_TOKEN` en el entorno.
-- **`railway-agent` está bloqueado** por trial expirado. Cualquier plan que dependa de él necesita un camino alternativo.
-- El directorio de trabajo **no es un repositorio git**, así que los flujos de GitHub se ejecutan contra repos remotos vía MCP, no sobre el working tree.
-- La lista de herramientas de Remote MCP en la documentación oficial está desactualizada respecto de lo que expone el servidor: el set real (§3.2) es bastante más amplio. Ante discrepancia, **confiar en los esquemas de las tools**, no en la doc.
+Para correr la suite automatizada del proyecto Corta:
+
+```powershell
+cd corta
+npm.cmd test
+```
+
+El script `test` está definido en `corta/package.json` y ejecuta:
+
+```bash
+node --test test.js
+```
+
+En PowerShell/Windows, preferir `npm.cmd test`. El comando `npm test` puede fallar si `npm.ps1` está bloqueado por la política de ejecución del sistema.
+
+La suite de `corta/test.js` fue escrita desde `SPEC.md` con enfoque TDD. Puede fallar contra el código heredado hasta que la implementación cumpla los comportamientos requeridos por la especificación.
+
+---
+
+## 7. Subagentes
+
+Hay subagentes locales configurados en `.codex/agents/`. Antes de delegar trabajo, leer el archivo `.toml` correspondiente y respetar su contrato operativo.
+
+Subagente relevante para este proyecto:
+
+- `tester` (`.codex/agents/tester.toml`): usarlo para crear o actualizar tests derivados de `SPEC.md`. Solo debe editar archivos de prueba; no debe modificar código de producción, configuración, documentación, dependencias ni lockfiles.
