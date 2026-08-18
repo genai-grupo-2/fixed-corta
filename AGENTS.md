@@ -182,10 +182,10 @@ La suite de `corta/test.js` fue escrita desde `SPEC.md` con enfoque TDD. Puede f
 
 ---
 
-## 7. Subagentes
+## 7. Skills
 
-Hay subagentes locales configurados en `.codex/agents/`. Antes de delegar trabajo, leer el archivo `.toml` correspondiente y respetar su contrato operativo.
+Hay skills locales de repositorio configuradas en `.agents/skills/`. Codex las descubre automáticamente desde el directorio actual hasta la raíz del repo. Antes de usar una skill, leer su `SKILL.md` completo y respetar su contrato operativo.
 
-Subagente relevante para este proyecto:
+Skill relevante para este proyecto:
 
-- `tester` (`.codex/agents/tester.toml`): usarlo para crear o actualizar tests derivados de `SPEC.md`. Solo debe editar archivos de prueba; no debe modificar código de producción, configuración, documentación, dependencias ni lockfiles.
+- `tester` (`.agents/skills/tester/SKILL.md`): usarla para crear o actualizar tests derivados de `SPEC.md` con enfoque TDD. Solo debe editar archivos de prueba; no debe modificar código de producción, configuración, documentación, dependencias ni lockfiles.
