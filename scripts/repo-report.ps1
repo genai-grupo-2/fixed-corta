@@ -184,10 +184,17 @@ $($resumenDiff -join "`n")
 
 # ------------------------------------------------------ 6. Redaccion con Claude
 
-$prompt = @'
+# IMPORTANTE: las instrucciones NO van como argumento de linea de comandos.
+# Start-Process en PowerShell 5.1 no entrecomilla los elementos de -ArgumentList
+# que contienen espacios, asi que un prompt largo se partiria en palabras sueltas.
+# Van por stdin, delante de los datos; el argumento -p es corto y lo entrecomillamos
+# a mano mas abajo.
+$instrucciones = @'
+INSTRUCCIONES
+=============
 Sos un asistente que redacta el reporte semanal de cambios de un repositorio git
-para un equipo de desarrollo. Por stdin recibis la salida cruda de varios comandos
-de git.
+para un equipo de desarrollo. Despues de la linea "DATOS" recibis la salida cruda
+de varios comandos de git.
 
 Redacta un reporte en Markdown, en espanol rioplatense, con esta estructura exacta:
 
@@ -203,22 +210,28 @@ Redacta un reporte en Markdown, en espanol rioplatense, con esta estructura exac
    Si no hay nada que senalar, escribi "Sin observaciones."
 
 Reglas:
-- Usa unicamente la informacion recibida por stdin. No inventes commits, autores ni archivos.
-- No uses herramientas ni leas archivos del disco.
-- Devolve solo el Markdown del reporte, sin preambulo ni comentarios tuyos.
+- Usa unicamente la informacion que aparece debajo de "DATOS". No inventes commits,
+  autores ni archivos.
+- No uses herramientas ni leas archivos del disco: todo lo que necesitas esta aca.
+- Devolve SOLO el Markdown del reporte. Sin preambulo, sin comentarios tuyos, sin
+  preguntas al final, sin bloques de codigo envolviendo todo el reporte.
 '@
+
+$entrada = $instrucciones + "`n`nDATOS`n=====`n" + $contexto
 
 $tmpIn  = Join-Path $env:TEMP "repo-report-in-$stamp.txt"
 $tmpOut = Join-Path $env:TEMP "repo-report-out-$stamp.txt"
 $tmpErr = Join-Path $env:TEMP "repo-report-err-$stamp.txt"
 
-Set-Content -Path $tmpIn -Value $contexto -Encoding utf8
+# UTF-8 sin BOM: el BOM se colaria como basura al principio del stdin de claude.
+[System.IO.File]::WriteAllText($tmpIn, $entrada, (New-Object System.Text.UTF8Encoding($false)))
 
 $claudeOk = $false
 try {
     Write-Log "Invocando claude -p (timeout ${ClaudeTimeoutSeconds}s) ..."
+    # Las comillas dobles son parte del valor a proposito: ver el comentario de arriba.
     $claudeArgs = @(
-        '-p', $prompt,
+        '-p', '"Segui al pie de la letra las INSTRUCCIONES que encabezan el texto que recibis por entrada estandar."',
         '--output-format', 'text',
         '--permission-mode', 'dontAsk',
         '--disallowedTools', 'Bash', 'Edit', 'Write', 'Read', 'Glob', 'Grep', 'WebFetch', 'WebSearch', 'Task'
@@ -230,16 +243,18 @@ try {
     if (-not $proc.WaitForExit($ClaudeTimeoutSeconds * 1000)) {
         Write-Log "ERROR: claude supero el timeout. Se lo termina."
         try { $proc.Kill() } catch {}
-    } elseif ($proc.ExitCode -ne 0) {
-        Write-Log "ERROR: claude salio con exit code $($proc.ExitCode). stderr: $(Get-Content $tmpErr -Raw -ErrorAction SilentlyContinue)"
     } else {
-        $salida = Get-Content $tmpOut -Raw -ErrorAction SilentlyContinue
+        # Start-Process -PassThru no expone ExitCode de forma confiable en
+        # PowerShell 5.1 (devuelve $null aunque el proceso haya salido con 0),
+        # asi que validamos la salida en si misma en vez del codigo de retorno.
+        $salida = Get-Content $tmpOut -Raw -Encoding UTF8 -ErrorAction SilentlyContinue
         if ($salida -and $salida.Trim().Length -gt 50) {
             Set-Content -Path $ReportFile -Value $salida.Trim() -Encoding utf8
             $claudeOk = $true
             Write-Log "Reporte redactado por Claude."
         } else {
-            Write-Log "ERROR: claude devolvio una salida vacia o demasiado corta."
+            $err = Get-Content $tmpErr -Raw -Encoding UTF8 -ErrorAction SilentlyContinue
+            Write-Log "ERROR: claude no devolvio un reporte utilizable. stderr: $err"
         }
     }
 } catch {
