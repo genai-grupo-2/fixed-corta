@@ -7,29 +7,123 @@
   <link rel="stylesheet" href="estilos.css">
 </head>
 <body>
-  <main class="tarjeta">
-    <img src="logo (1).png" alt="Corta" class="logo">
-    <h1>Corta</h1>
-    <p class="sub">El acortador de URLs interno</p>
+  <main class="contenedor contenedor-inicio">
+    <header class="marca">
+      <img src="logo.png" alt="" class="logo">
+      <span>Corta</span>
+    </header>
 
-    <form id="form">
-      <input type="url" id="url" placeholder="https://una-url-muy-larga..." required>
-      <button type="submit">Acortar</button>
-    </form>
+    <div class="paneles">
+    <section class="tarjeta tarjeta-acortador">
+      <div class="encabezado">
+        <span class="eyebrow">Simple y rápido</span>
+        <h1>CORTA</h1>
+        <p class="bajada">El acortador de URLs interno</p>
+        <p class="sub">Pegá una URL larga y convertila en un enlace fácil de compartir.</p>
+      </div>
 
-    <div id="resultado" class="oculto">
-      <p>Tu link corto:</p>
-      <a id="link-corto" href="#" target="_blank"></a>
-      <button id="copiar" type="button">Copiar</button>
+      <form id="form">
+        <label class="sr-only" for="url">URL para acortar</label>
+        <input type="url" id="url" placeholder="https://tu-url-larga.com" required>
+        <button type="submit">Acortar link</button>
+      </form>
+
+      <div id="resultado" class="resultado oculto" aria-live="polite">
+        <div>
+          <span class="resultado-etiqueta">Tu nuevo enlace</span>
+          <a id="link-corto" href="#" target="_blank" rel="noopener"></a>
+        </div>
+        <button id="copiar" class="boton-secundario" type="button">Copiar</button>
+      </div>
+    </section>
+
+    <aside class="tarjeta historial" aria-labelledby="titulo-historial">
+      <div class="historial-encabezado">
+        <div>
+          <span class="eyebrow">Tus enlaces</span>
+          <h2 id="titulo-historial">Historial</h2>
+        </div>
+        <span id="cantidad-links" class="contador" aria-label="Cantidad de enlaces">0</span>
+      </div>
+      <div id="lista-historial" class="lista-historial" aria-live="polite">
+        <p class="historial-vacio">Todavía no acortaste ningún enlace.</p>
+      </div>
+    </aside>
     </div>
 
-    <p class="pie"><a href="stats.html">Ver estadísticas de un link</a></p>
+    <footer class="pie">
+      <span>¿Ya tenés un enlace?</span>
+      <a href="stats.html">Consultar estadísticas <span aria-hidden="true">→</span></a>
+    </footer>
   </main>
 
   <script>
     const form = document.getElementById('form');
     const resultado = document.getElementById('resultado');
     const linkCorto = document.getElementById('link-corto');
+    const listaHistorial = document.getElementById('lista-historial');
+    const cantidadLinks = document.getElementById('cantidad-links');
+
+    function fechaCorta(fecha) {
+      return new Intl.DateTimeFormat('es-AR', {
+        day: '2-digit', month: 'short', year: 'numeric'
+      }).format(new Date(fecha));
+    }
+
+    function crearItemHistorial(link) {
+      const item = document.createElement('article');
+      item.className = 'historial-item';
+
+      const datos = document.createElement('div');
+      datos.className = 'historial-datos';
+
+      const corto = document.createElement('a');
+      corto.className = 'historial-corto';
+      corto.href = `/${encodeURIComponent(link.codigo)}`;
+      corto.target = '_blank';
+      corto.rel = 'noopener';
+      corto.textContent = `${window.location.host}/${link.codigo}`;
+
+      const original = document.createElement('span');
+      original.className = 'historial-original';
+      original.title = link.url;
+      original.textContent = link.url;
+
+      const meta = document.createElement('div');
+      meta.className = 'historial-meta';
+      meta.textContent = `${link.clicks} ${link.clicks === 1 ? 'click' : 'clicks'} · ${fechaCorta(link.creado)}`;
+
+      const estadisticas = document.createElement('a');
+      estadisticas.className = 'historial-stats';
+      estadisticas.href = `stats.html?codigo=${encodeURIComponent(link.codigo)}`;
+      estadisticas.textContent = 'Ver estadísticas';
+
+      datos.append(corto, original, meta);
+      item.append(datos, estadisticas);
+      return item;
+    }
+
+    async function cargarHistorial() {
+      try {
+        const res = await fetch('/api/links');
+        if (!res.ok) throw new Error('No se pudo cargar el historial');
+        const links = await res.json();
+        cantidadLinks.textContent = links.length;
+        listaHistorial.replaceChildren();
+
+        if (!links.length) {
+          const vacio = document.createElement('p');
+          vacio.className = 'historial-vacio';
+          vacio.textContent = 'Todavía no acortaste ningún enlace.';
+          listaHistorial.append(vacio);
+          return;
+        }
+
+        links.forEach((link) => listaHistorial.append(crearItemHistorial(link)));
+      } catch {
+        listaHistorial.textContent = 'No pudimos cargar el historial.';
+      }
+    }
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -44,11 +138,15 @@
       linkCorto.textContent = corta;
       linkCorto.href = corta;
       resultado.classList.remove('oculto');
+      document.getElementById('url').value = '';
+      await cargarHistorial();
     });
 
     document.getElementById('copiar').addEventListener('click', () => {
       navigator.clipboard.writeText(linkCorto.textContent);
     });
+
+    cargarHistorial();
   </script>
 </body>
 </html>

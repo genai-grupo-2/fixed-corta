@@ -7,23 +7,114 @@
   <link rel="stylesheet" href="estilos.css">
 </head>
 <body>
-  <main class="tarjeta">
-    <h1>Estadísticas</h1>
-    <p class="sub">Consultá los números de un link corto</p>
+  <main class="contenedor">
+    <header class="marca">
+      <img src="logo.png" alt="" class="logo">
+      <span>Corta</span>
+    </header>
 
-    <form id="form-stats">
-      <input type="text" id="codigo" placeholder="ej: a3k" required>
-      <button type="submit">Buscar</button>
-    </form>
+    <section class="tarjeta">
+      <div class="encabezado">
+        <span class="eyebrow">Tus enlaces</span>
+        <h1>Estadísticas de tus links</h1>
+        <p class="sub">Ingresá el código corto para conocer su actividad.</p>
+      </div>
 
-    <!-- maqueta: datos de mentira, falta conectar con el server -->
-    <div class="stats">
-      <div class="stat"><span class="numero">123</span><span class="etiqueta">clicks</span></div>
-      <div class="stat"><span class="numero">-</span><span class="etiqueta">URL original</span></div>
-      <div class="stat"><span class="numero">-</span><span class="etiqueta">creado el</span></div>
-    </div>
+      <form id="form-stats">
+        <label class="sr-only" for="codigo">Código del enlace</label>
+        <input type="text" id="codigo" placeholder="Ejemplo: a3k" autocomplete="off" required>
+        <button type="submit">Consultar</button>
+      </form>
 
-    <p class="pie"><a href="index.html">Volver a acortar</a></p>
+      <p id="error-stats" class="mensaje-error oculto" role="alert"></p>
+
+      <div id="resultado-stats" class="stats oculto" aria-live="polite">
+        <article class="stat stat-destacada">
+          <span class="etiqueta">Clicks totales</span>
+          <span id="stats-clicks" class="numero">—</span>
+        </article>
+        <article class="stat">
+          <span class="etiqueta">URL original</span>
+          <a id="stats-url" class="dato" href="#" target="_blank" rel="noopener">—</a>
+        </article>
+        <article class="stat">
+          <span class="etiqueta">Creado el</span>
+          <span id="stats-creado" class="dato">—</span>
+        </article>
+      </div>
+    </section>
+
+    <footer class="pie">
+      <a href="index.html"><span aria-hidden="true">←</span> Crear un nuevo link</a>
+    </footer>
   </main>
+
+  <script>
+    const formulario = document.getElementById('form-stats');
+    const resultado = document.getElementById('resultado-stats');
+    const error = document.getElementById('error-stats');
+    const boton = formulario.querySelector('button');
+
+    function obtenerCodigo(valor) {
+      const texto = valor.trim();
+      if (!texto) return '';
+
+      try {
+        const url = new URL(texto);
+        const partes = url.pathname.split('/').filter(Boolean);
+        return partes.at(-1) || '';
+      } catch {
+        const limpio = texto.split(/[?#]/)[0].replace(/\/+$/, '');
+        return limpio.split('/').filter(Boolean).at(-1) || '';
+      }
+    }
+
+    formulario.addEventListener('submit', async (evento) => {
+      evento.preventDefault();
+      resultado.classList.add('oculto');
+      error.classList.add('oculto');
+
+      const codigo = obtenerCodigo(document.getElementById('codigo').value);
+      if (!codigo) {
+        error.textContent = 'Ingresá un código o un link corto válido.';
+        error.classList.remove('oculto');
+        return;
+      }
+
+      boton.disabled = true;
+      boton.textContent = 'Consultando…';
+
+      try {
+        const respuesta = await fetch(`/api/links/${encodeURIComponent(codigo)}/stats`);
+        const datos = await respuesta.json();
+
+        if (!respuesta.ok) {
+          throw new Error(datos.error || 'No pudimos consultar las estadísticas.');
+        }
+
+        document.getElementById('stats-clicks').textContent = datos.clicks;
+        const urlOriginal = document.getElementById('stats-url');
+        urlOriginal.textContent = datos.url;
+        urlOriginal.href = datos.url;
+        document.getElementById('stats-creado').textContent = new Intl.DateTimeFormat('es-AR', {
+          dateStyle: 'medium',
+          timeStyle: 'short'
+        }).format(new Date(datos.creado));
+        resultado.classList.remove('oculto');
+      } catch (fallo) {
+        error.textContent = fallo.message || 'No pudimos consultar las estadísticas.';
+        error.classList.remove('oculto');
+      } finally {
+        boton.disabled = false;
+        boton.textContent = 'Consultar';
+      }
+    });
+
+    const codigoInicial = new URLSearchParams(window.location.search).get('codigo');
+    if (codigoInicial) {
+      document.getElementById('codigo').value = codigoInicial;
+      formulario.requestSubmit();
+    }
+  </script>
 </body>
 </html>
