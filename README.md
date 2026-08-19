@@ -71,6 +71,11 @@ La aplicacion corre en Railway, en el proyecto `corta`, environment
 | Puerto | lo inyecta Railway en `PORT` |
 | Base de datos | PostgreSQL (servicio `Postgres`) |
 | Volumen | montado en `/data`, solo fallback |
+| Deploy | automatico en cada push a `main` |
+
+Si el auto-deploy no dispara, se puede deployar el directorio local con
+`railway up` desde la raiz del repo (no desde `corta/`: el servicio ya tiene
+`rootDirectory: corta`).
 
 ### Persistencia
 

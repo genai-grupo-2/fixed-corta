@@ -128,6 +128,9 @@ Notas de uso:
 - **Agregar una base gestionada.** `create-service` solo levanta un contenedor pelado desde una imagen: sin volumen, sin `POSTGRES_PASSWORD` y sin `DATABASE_URL`. El PostgreSQL gestionado se agrega desde el canvas (`Ctrl+K` → *Database* → *Add PostgreSQL*).
 - **Borrar servicios.** No hay `delete-service`, así que un servicio creado por error queda y hay que limpiarlo a mano.
 - **`create-deployment` dispara el build antes de que se pueda configurar el servicio.** El root directory se setea con `update-service` recién después, así que el primer deploy de un monorepo falla y hay que hacer `redeploy`.
+- **`create-deployment` deja el source sin branch trackeada**, así que el servicio queda sin auto-deploy: ningún push dispara nada. Se arregla con `railway service source connect --repo <owner/repo> --branch main --service <svc>`.
+- **`redeploy` no avanza el código.** Reusa el snapshot del build original y queda clavado en ese commit. Para deployar codigo nuevo sin auto-deploy, usar `railway up` desde la raiz del repo.
+- **No cambia el source de un servicio.** `update-service` no lo maneja; es CLI o dashboard.
 
 ### 3.3 Documentación como primera parada
 
@@ -151,6 +154,18 @@ El MCP de Railway ejecuta comandos y llama APIs **en nombre del usuario**. Regla
 ## 5. Gestión del source de un servicio (repo GitHub ↔ Railway)
 
 El Remote MCP **no expone** `connect-service-source` / `disconnect-service-source`. Solo el **Local MCP** (sobre CLI) los tiene. Hay tres caminos:
+
+> **Caso real (19/08/2026).** El selector de repos del dashboard **no listaba**
+> `genai-grupo-2/fixed-corta`, aun con la GitHub App `railway-app` instalada en la
+> org con `repository_selection: all` y con el usuario como admin del repo. La
+> causa: Railway asocia cada instalación de la App con la cuenta de Railway que la
+> autorizó, y esa instalación la había hecho otra cuenta. Reinstalar desde GitHub
+> no arregla nada — la App ya tenía todos los permisos, así que el *Save* es un
+> no-op y `updated_at` de la instalación ni se mueve.
+>
+> **Lo que sí funcionó: `railway service source connect` desde el CLI**, que usa
+> el token de la cuenta en vez de la lista cacheada del selector. Ante este
+> síntoma, ir directo al CLI y no perder tiempo con permisos de GitHub.
 
 **a) CLI de Railway** (recomendado):
 ```bash
