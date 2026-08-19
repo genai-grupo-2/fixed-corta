@@ -11,15 +11,24 @@ Guía operativa para agentes que trabajan en este repositorio. Documenta los **d
 | Qué | Valor |
 |---|---|
 | Usuario GitHub | `DecoudJuan` (Juan Decoud) |
-| Usuario Railway | `decoudjuan` (Juan Decoud) |
-| Workspace Railway | `Juan Decoud's Projects` — `85a40838-78dc-4892-9b5a-3fea624f65e8` |
-| Proyecto Railway | `secure-benevolence` — `8ec3a23e-8240-41e2-9f8d-6f0d37f445c2` |
-| Environment | `production` — `27bacc80-7594-49e6-84a7-86b3f5fc12de` |
-| Servicios | `pokedex-api-app` (`2f3186b1-5f10-42b2-9fe2-4b2576262d35`), `Postgres` (`d2e10d6f-ca43-42d3-bfe4-f04cbb311332`) |
+| Repo | `genai-grupo-2/fixed-corta` |
+| Usuario Railway | `julian-ritondale` (Julián Ritondale) |
+| Workspace Railway | `Julián Ritondale's Projects` — `83ebe77f-560a-4aab-889d-7032983081fa` |
+| Proyecto Railway | `corta` — `ec9a2014-be33-4662-8e4b-f47a1407fb17` |
+| Environment | `production` — `365e9350-6e30-4466-9aad-63f068e3e690` |
+| Servicio app | `corta` — `5e8ede4d-599a-47f2-a973-2bd48fff3f5c` |
+| Dominio | `corta-production-ea3e.up.railway.app` |
 
-`pokedex-api-app` corre con builder **NIXPACKS**, start command `npm run start:prod`, dominio `pokedex-api-app-production.up.railway.app` (puerto 8080) y variables `DATABASE_URL`, `FRONTEND_URL`.
+El servicio `corta` corre con builder **RAILPACK**, root directory `corta`, start
+command `npm start`, healthcheck en `/`, un volumen montado en `/data` y las
+variables `DATABASE_URL`, `DB_FILE`, `NODE_ENV`.
 
-**Estado del source:** históricamente el servicio estuvo enlazado al repo `DecoudJuan/pokedex-api-backend` (branch `main`). Ver §5 para el procedimiento de desconexión.
+**Cuenta anterior:** la documentación previa apuntaba al workspace
+`Juan Decoud's Projects`, proyecto `secure-benevolence`
+(`8ec3a23e-8240-41e2-9f8d-6f0d37f445c2`), con los servicios `pokedex-api-app` y
+`Postgres`. Esa cuenta **no** es la que tiene conectado el MCP: el usuario
+autenticado no tiene rol `member` ahí y `create-deployment` falla. El deploy de
+Corta vive en el proyecto `corta` de la tabla de arriba.
 
 ---
 
@@ -113,6 +122,13 @@ Notas de uso:
 - Si se omite `environmentId`, se usa `production`.
 - `search-docs` devuelve secciones con URL; `fetch-docs` trae el markdown completo de una página o slug (`reference/variables`).
 
+**Lo que el Remote MCP NO puede hacer** (verificado en esta sesión, hay que ir al dashboard o al CLI):
+
+- **Crear o montar volúmenes.** No hay tool. `get-service-config` los lee, nada más. Se crean desde el canvas (`Ctrl+K` → *Volume*) o con `railway volume add --mount-path /data --service <svc>`.
+- **Agregar una base gestionada.** `create-service` solo levanta un contenedor pelado desde una imagen: sin volumen, sin `POSTGRES_PASSWORD` y sin `DATABASE_URL`. El PostgreSQL gestionado se agrega desde el canvas (`Ctrl+K` → *Database* → *Add PostgreSQL*).
+- **Borrar servicios.** No hay `delete-service`, así que un servicio creado por error queda y hay que limpiarlo a mano.
+- **`create-deployment` dispara el build antes de que se pueda configurar el servicio.** El root directory se setea con `update-service` recién después, así que el primer deploy de un monorepo falla y hay que hacer `redeploy`.
+
 ### 3.3 Documentación como primera parada
 
 Antes de improvisar sobre configuración de Railway, consultar `search-docs` → `fetch-docs`. Es más barato y más exacto que adivinar nombres de campos.
@@ -140,18 +156,18 @@ El Remote MCP **no expone** `connect-service-source` / `disconnect-service-sourc
 ```bash
 railway login
 railway service source disconnect \
-  --service pokedex-api-app \
+  --service corta \
   --environment production \
-  --project 8ec3a23e-8240-41e2-9f8d-6f0d37f445c2
+  --project ec9a2014-be33-4662-8e4b-f47a1407fb17
 ```
-Para reconectar: `railway service source connect --repo DecoudJuan/pokedex-api-backend --branch main --service pokedex-api-app`
+Para reconectar: `railway service source connect --repo genai-grupo-2/fixed-corta --branch main --service corta`
 
 **b) API pública GraphQL** (`https://backboard.railway.com/graphql/v2`, header `Authorization: Bearer <token>`):
 ```graphql
 mutation serviceDisconnect($id: String!) {
   serviceDisconnect(id: $id) { id }
 }
-# variables: { "id": "2f3186b1-5f10-42b2-9fe2-4b2576262d35" }
+# variables: { "id": "5e8ede4d-599a-47f2-a973-2bd48fff3f5c" }
 ```
 Reconectar: `serviceConnect(id, input: { repo, branch })`.
 
@@ -178,7 +194,9 @@ node --test test.js
 
 En PowerShell/Windows, preferir `npm.cmd test`. El comando `npm test` puede fallar si `npm.ps1` está bloqueado por la política de ejecución del sistema.
 
-La suite de `corta/test.js` fue escrita desde `SPEC.md` con enfoque TDD. Puede fallar contra el código heredado hasta que la implementación cumpla los comportamientos requeridos por la especificación.
+La suite de `corta/test.js` fue escrita desde `SPEC.md` con enfoque TDD y describe el contrato del spec, no el estado actual del código. **Hoy pasan 6 de 12.** Los pendientes están listados en la sección *Pendientes frente al spec* del `README.md`.
+
+Los tests corren siempre contra el backend de archivo JSON: levantan `server.js` como subproceso y leen y escriben `corta/links.json` directo. No necesitan PostgreSQL levantado, porque `server.js` elige el backend según haya o no `DATABASE_URL`. **Cuidado:** si tenés `DATABASE_URL` exportada en tu shell, la suite va a correr contra la base y fallar entera.
 
 ---
 
