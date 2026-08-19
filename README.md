@@ -6,7 +6,7 @@ Corta es un acortador interno de URLs. Permite crear enlaces cortos, visitar el 
 
 El repositorio parte de una aplicación heredada y se está llevando progresivamente a producción. [`SPEC.md`](SPEC.md) define el comportamiento esperado y funciona como fuente de verdad para la implementación y los tests.
 
-Actualmente la aplicación usa `corta/links.json` como almacenamiento local transitorio. La versión de producción deberá usar PostgreSQL para que los enlaces y sus clics sobrevivan reinicios y redeploys.
+En producción la aplicación usa PostgreSQL. En desarrollo local y en la suite de tests usa `corta/links.json`, para no necesitar una base levantada. El backend se elige solo según haya o no `DATABASE_URL`.
 
 ## Requisitos
 
@@ -35,9 +35,10 @@ Queda disponible en <http://localhost:3000>. El puerto se puede cambiar con `POR
 ├── SPEC.md             Especificación funcional y criterios de prueba
 ├── corta/
 │   ├── public/         Interfaz web y estilos
+│   ├── almacen/        Backends de almacenamiento (postgres.js y json.js)
 │   ├── app.js          Rutas y lógica de la API (factory `crearApp`)
-│   ├── server.js       Arranque HTTP, resolución de PORT y de DB_FILE
-│   ├── links.json      Almacenamiento local transitorio
+│   ├── server.js       Arranque HTTP y elección del backend
+│   ├── links.json      Almacenamiento de desarrollo y tests
 │   ├── test.js         Suite automatizada derivada de SPEC.md
 │   └── utils.js        Generación de códigos cortos
 └── README.md
@@ -58,32 +59,41 @@ Las variables de entorno esperadas están documentadas en [`.env.example`](.env.
 
 ## Deploy
 
-La aplicacion corre en Railway, en el proyecto `secure-benevolence`, environment
+La aplicacion corre en Railway, en el proyecto `corta`, environment
 `production`.
 
 | Ajuste | Valor |
 |---|---|
-| Builder | Nixpacks |
+| Builder | Railpack |
 | Root directory | `corta` |
 | Start command | `npm start` |
 | Healthcheck | `/` |
 | Puerto | lo inyecta Railway en `PORT` |
-| Volumen | montado en `/data` |
+| Base de datos | PostgreSQL (servicio `Postgres`) |
+| Volumen | montado en `/data`, solo fallback |
 
 ### Persistencia
 
-El filesystem del contenedor es efimero: se descarta en cada redeploy. Por eso el
-servicio monta un volumen persistente en `/data` y la variable `DB_FILE` apunta a
-`/data/links.json`. Sin esa combinacion, los links y sus clics se perderian en
-cada deploy.
+El almacenamiento de produccion es **PostgreSQL**. `server.js` elige el backend
+segun la presencia de `DATABASE_URL`:
 
-`corta/server.js` inicializa el archivo con `[]` la primera vez, porque un volumen
-recien creado viene vacio.
+| `DATABASE_URL` | Backend | Uso |
+|---|---|---|
+| presente | `almacen/postgres.js` | Produccion |
+| ausente | `almacen/json.js` | Desarrollo local y tests |
 
-Esto es un puente, no la solucion final: la version definitiva debe usar
-PostgreSQL. El proyecto ya tiene un servicio `Postgres` disponible y
-`DATABASE_URL` esta reservada en [`.env.example`](.env.example) para esa
-migracion.
+En Railway, `DATABASE_URL` es una variable de referencia a
+`${{Postgres.DATABASE_URL}}`, asi que apunta a la red privada del proyecto y no
+hay credenciales en el repo.
+
+El esquema se crea solo al arrancar (`CREATE TABLE IF NOT EXISTS`). `codigo` es
+`PRIMARY KEY` porque [`SPEC.md`](SPEC.md) declara la unicidad como una
+invariancia del sistema: con la restriccion en la base, una colision de codigo
+falla de forma ruidosa en vez de duplicar o sobrescribir un enlace.
+
+El volumen montado en `/data` queda como fallback del backend JSON. Ya no es el
+camino de produccion, pero si se quita `DATABASE_URL` el servicio sigue
+funcionando contra el archivo sin perder datos entre redeploys.
 
 ## Tests
 
@@ -96,18 +106,16 @@ npm test
 
 En PowerShell/Windows, usar `npm.cmd test`.
 
-Los tests describen el contrato del spec, no el estado actual del código: hoy pasan 5 de 12. Lo que falta implementarse está listado en la sección siguiente.
+Los tests describen el contrato del spec, no el estado actual del código: hoy pasan 6 de 12. Lo que falta implementarse está listado en la sección siguiente.
 
 ## Pendientes frente al spec
 
 Los siguientes comportamientos están definidos en [`SPEC.md`](SPEC.md) y todavía no se cumplen:
 
-- `GET /:codigo` responde el destino con `res.send` en vez de una redirección real con `Location`.
-- El incremento de `clicks` no se persiste: falta guardar después de sumar.
+- `POST /api/links` responde `200` en vez de `201`.
 - No hay validación de URL. Se aceptan URLs relativas, vacías y protocolos como `javascript:` o `data:`.
-- No hay reintento ante colisión de código generado.
+- No hay reintento ante colisión de código generado. La `PRIMARY KEY` evita que se corrompan los datos, pero la petición falla en vez de reintentar con otro código.
 - `public/stats.html` conserva datos de maqueta en vez de consultar la API.
-- El almacenamiento sigue siendo un archivo JSON. La versión definitiva debe usar PostgreSQL.
 
 ## Seguridad
 
