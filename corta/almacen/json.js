@@ -44,6 +44,16 @@ function crearAlmacenJson({ dbFile = path.join(__dirname, '..', 'links.json') } 
       return link;
     },
 
+    async incrementarClicks(codigo) {
+      const links = leer();
+      const link = links.find((item) => item.codigo === codigo);
+      if (!link) return undefined;
+
+      link.clicks += 1;
+      guardar(links);
+      return link;
+    },
+
     async cerrar() {}
   };
 }

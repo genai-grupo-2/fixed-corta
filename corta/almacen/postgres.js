@@ -63,6 +63,19 @@ function crearAlmacenPostgres({ connectionString }) {
       return aLink(rows[0]);
     },
 
+    // El incremento se hace en la base y no leyendo-sumando-escribiendo desde
+    // Node: asi dos redirecciones concurrentes del mismo codigo suman dos clics
+    // en vez de pisarse.
+    async incrementarClicks(codigo) {
+      const { rows } = await pool.query(
+        `UPDATE links SET clicks = clicks + 1
+         WHERE codigo = $1
+         RETURNING codigo, url, clicks, creado`,
+        [codigo]
+      );
+      return aLink(rows[0]);
+    },
+
     async cerrar() {
       await pool.end();
     }

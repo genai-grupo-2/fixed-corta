@@ -63,13 +63,11 @@ function crearApp({ almacen }) {
       return res.status(404).send('No existe ese link');
     }
 
-    // PENDIENTE (ver README): el spec pide un 302 con Location y un clic
-    // persistido. Hoy se responde la URL como texto y el incremento se pierde
-    // porque nunca se guarda. La migracion a PostgreSQL no cambia esto: el bug
-    // vive en este handler, no en el almacen, y se comporta igual con los dos
-    // backends.
-    link.clicks += 1;
-    return res.send(link.url);
+    // El clic se registra antes de responder: si el incremento falla, no se
+    // redirige, asi el contador no puede quedar atrasado respecto de las
+    // redirecciones efectivamente servidas.
+    await almacen.incrementarClicks(link.codigo);
+    return res.redirect(link.url);
   }));
 
   return app;
