@@ -70,7 +70,8 @@ function crearApp({ dbFile = path.join(__dirname, 'links.json') } = {}) {
     }
 
     link.clicks += 1;
-    return res.send(link.url);
+    guardarLinks(links);
+    return res.redirect(link.url);
   });
 
   return app;
