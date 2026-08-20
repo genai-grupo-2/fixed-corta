@@ -39,6 +39,11 @@ function crearAlmacenJson({ dbFile = path.join(__dirname, '..', 'links.json') } 
 
     async crear(link) {
       const links = leer();
+      if (links.some((item) => item.codigo === link.codigo)) {
+        const error = new Error('El codigo corto ya existe');
+        error.code = 'CODIGO_DUPLICADO';
+        throw error;
+      }
       links.push(link);
       guardar(links);
       return link;

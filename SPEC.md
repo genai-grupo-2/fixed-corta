@@ -190,7 +190,7 @@ La batería automatizada derivada de esta especificación debe cubrir, como mín
 15. Interfaz de estadísticas reemplazando la maqueta por datos reales y limpiando resultados obsoletos ante error.
 16. Persistencia de enlaces y clics después de reiniciar o redesplegar el servicio.
 
-## 11. Diferencias conocidas del código heredado
+## 11. Diferencias del código heredado resueltas
 
 Al redactar esta primera versión se observaron las siguientes diferencias respecto del contrato:
 
@@ -205,4 +205,4 @@ Al redactar esta primera versión se observaron las siguientes diferencias respe
 - La prueba existente es un script manual, no una batería automatizada, y todavía asume una respuesta incompatible con una redirección seguida automáticamente.
 - Existe una credencial histórica en una nota versionada. Debe tratarse como comprometida, eliminarse del estado publicado y no reutilizarse; su valor no se reproduce en esta especificación.
 
-Estas diferencias son trabajo pendiente para los siguientes milestones. Los tests deben escribirse antes que las correcciones correspondientes.
+Estas diferencias se conservan como registro histórico y ya fueron resueltas. Los tests derivados de este documento verifican las correcciones y deben mantenerse verdes.

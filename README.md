@@ -111,16 +111,8 @@ npm test
 
 En PowerShell/Windows, usar `npm.cmd test`.
 
-Los tests describen el contrato del spec, no el estado actual del código: hoy pasan 6 de 12. Lo que falta implementarse está listado en la sección siguiente.
-
-## Pendientes frente al spec
-
-Los siguientes comportamientos están definidos en [`SPEC.md`](SPEC.md) y todavía no se cumplen:
-
-- `POST /api/links` responde `200` en vez de `201`.
-- No hay validación de URL. Se aceptan URLs relativas, vacías y protocolos como `javascript:` o `data:`.
-- No hay reintento ante colisión de código generado. La `PRIMARY KEY` evita que se corrompan los datos, pero la petición falla en vez de reintentar con otro código.
-- `public/stats.html` conserva datos de maqueta en vez de consultar la API.
+La suite cubre creación y validación de URLs, colisiones, concurrencia,
+redirecciones, persistencia de clics, estadísticas y las dos interfaces web.
 
 ## Seguridad
 
