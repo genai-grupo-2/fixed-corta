@@ -219,6 +219,42 @@ Los tests corren siempre contra el backend de archivo JSON: levantan `server.js`
 
 Hay skills locales de repositorio configuradas en `.agents/skills/`. Codex las descubre automáticamente desde el directorio actual hasta la raíz del repo. Antes de usar una skill, leer su `SKILL.md` completo y respetar su contrato operativo.
 
-Skill relevante para este proyecto:
+Skills relevantes para este proyecto:
 
-- `tester` (`.agents/skills/tester/SKILL.md`): usarla para crear o actualizar tests derivados de `SPEC.md` con enfoque TDD. Solo debe editar archivos de prueba; no debe modificar código de producción, configuración, documentación, dependencias ni lockfiles.
+- `test` (`.agents/skills/test/SKILL.md`): usarla para crear o actualizar tests derivados de `SPEC.md` con enfoque TDD. Solo debe editar archivos de prueba; no debe modificar código de producción, configuración, documentación, dependencias ni lockfiles.
+- `collect-memory` (`.agents/skills/collect-memory/SKILL.md`): usarla al cerrar una sesión o cuando el equipo pida guardar avances, pendientes, decisiones, bloqueos y preferencias duraderas.
+
+---
+
+## 8. Memoria del proyecto
+
+Actualizada: 2026-08-20.
+
+### Avances verificados
+
+- Milestones 1 y 2 completos en `main`: historia inicial trazable, proyecto ordenado, `README.md`, `.gitignore`, `SPEC.md` y configuración documentada.
+- Milestone 4 completo en `main`: endpoint de estadísticas y `stats.html` conectada a datos reales.
+- Producción usa PostgreSQL y la aplicación pública responde en `https://corta-production-ea3e.up.railway.app`.
+- La prueba pública del milestone 5 creó el código `ytu`, registró una redirección y devolvió `clicks: 1` desde estadísticas.
+- El historial de `main` contiene commits de Juan Decoud, Julián Ritondale, candeperles y PiaAndreuccetti.
+- En esta computadora existe la tarea semanal `Codex Weekly Repository Changes`, programada los viernes a las 18:00. Se verificó un pull exitoso y un reporte de 10 commits con autores y archivos en el worktree dedicado `.worktrees/team-report`.
+- La skill de repositorio `collect-memory` existe en `.agents/skills/collect-memory/` y esta sección es su primera actualización real.
+
+### Trabajo terminado fuera de main
+
+- Milestone 3 completo en la rama remota `fix/milestone-3-completo`, commits `c0bfb6a` y `4b49a05`: validación HTTP/HTTPS, respuesta `201`, reintentos y `503` ante colisiones, unicidad en JSON/PostgreSQL, limpieza de estadísticas y concurrencia de clicks. Resultado verificado: 14/14 tests verdes. Falta revisar y fusionar la rama.
+
+### Pendientes y bloqueos
+
+- Milestone 5: falta hacer un redeploy y comprobar que `ytu` y su click sobreviven. El Railway MCP está autenticado como `piaandreuccetti`, sin rol viewer sobre el proyecto `corta`; se necesita conectar una cuenta con acceso o agregar esa cuenta al proyecto.
+- Extra de equipo: falta confirmar o agregar colaboradores. GitHub MCP está autenticado como `PiaAndreuccetti`, pero la organización rechaza el token por su política de duración; renovar el token con vigencia máxima de 366 días.
+- Extra de equipo: Juan, Julián y Cande deben configurar y demostrar la tarea programada en sus propias computadoras.
+
+### Decisiones y convenciones duraderas
+
+- `SPEC.md` es la fuente de verdad y las correcciones/features se trabajan con tests primero.
+- PostgreSQL es el almacenamiento de producción; JSON queda para desarrollo local y tests.
+- Nunca registrar secretos en código, reportes, memoria, issues o PRs.
+- Confirmar antes de redeploys u otras acciones destructivas de Railway.
+- Preservar cambios locales del equipo; usar worktrees aislados cuando una rama limpia evite interferencias.
+- La memoria debe distinguir lo que está en `main`, lo que solo existe en una rama y lo que fue verificado en servicios externos.
