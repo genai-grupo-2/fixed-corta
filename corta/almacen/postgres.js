@@ -54,13 +54,20 @@ function crearAlmacenPostgres({ connectionString }) {
     },
 
     async crear(link) {
-      const { rows } = await pool.query(
-        `INSERT INTO links (codigo, url, clicks, creado)
-         VALUES ($1, $2, $3, $4)
-         RETURNING codigo, url, clicks, creado`,
-        [link.codigo, link.url, link.clicks, link.creado]
-      );
-      return aLink(rows[0]);
+      try {
+        const { rows } = await pool.query(
+          `INSERT INTO links (codigo, url, clicks, creado)
+           VALUES ($1, $2, $3, $4)
+           RETURNING codigo, url, clicks, creado`,
+          [link.codigo, link.url, link.clicks, link.creado]
+        );
+        return aLink(rows[0]);
+      } catch (error) {
+        if (error.code === '23505') {
+          error.code = 'CODIGO_DUPLICADO';
+        }
+        throw error;
+      }
     },
 
     // El incremento se hace en la base y no leyendo-sumando-escribiendo desde

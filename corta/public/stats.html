@@ -73,6 +73,11 @@
       evento.preventDefault();
       resultado.classList.add('oculto');
       error.classList.add('oculto');
+      document.getElementById('stats-clicks').textContent = '';
+      const urlAnterior = document.getElementById('stats-url');
+      urlAnterior.textContent = '';
+      urlAnterior.removeAttribute('href');
+      document.getElementById('stats-creado').textContent = '';
 
       const codigo = obtenerCodigo(document.getElementById('codigo').value);
       if (!codigo) {

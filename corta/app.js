@@ -2,6 +2,25 @@ const express = require('express');
 const path = require('path');
 const { generarCodigo } = require('./utils');
 
+const MAX_INTENTOS_CODIGO = 10;
+
+function normalizarUrl(valor) {
+  if (typeof valor !== 'string') return undefined;
+
+  const texto = valor.trim();
+  if (!texto) return undefined;
+
+  try {
+    const url = new URL(texto);
+    if (!['http:', 'https:'].includes(url.protocol) || !url.hostname) {
+      return undefined;
+    }
+    return texto;
+  } catch {
+    return undefined;
+  }
+}
+
 // El almacen se inyecta: puede ser el archivo JSON o PostgreSQL. Sus operaciones
 // son asincronicas en los dos casos, asi que hay un solo camino de codigo.
 function crearApp({ almacen }) {
@@ -21,20 +40,30 @@ function crearApp({ almacen }) {
   };
 
   app.post('/api/links', asincronico(async (req, res) => {
-    const { url } = req.body;
+    const url = normalizarUrl(req.body?.url);
     if (!url) {
-      return res.status(400).json({ error: 'Falta la url' });
+      return res.status(400).json({ error: 'La URL debe ser absoluta y usar http o https' });
     }
 
-    const nuevo = {
-      codigo: generarCodigo(),
-      url,
-      clicks: 0,
-      creado: new Date().toISOString()
-    };
+    for (let intento = 0; intento < MAX_INTENTOS_CODIGO; intento += 1) {
+      const nuevo = {
+        codigo: generarCodigo(),
+        url,
+        clicks: 0,
+        creado: new Date().toISOString()
+      };
 
-    await almacen.crear(nuevo);
-    return res.json({ codigo: nuevo.codigo, corta: `/${nuevo.codigo}` });
+      try {
+        await almacen.crear(nuevo);
+        return res.status(201).json({ codigo: nuevo.codigo, corta: `/${nuevo.codigo}` });
+      } catch (error) {
+        if (error.code !== 'CODIGO_DUPLICADO') throw error;
+      }
+    }
+
+    return res.status(503).json({
+      error: 'No fue posible generar un codigo corto disponible'
+    });
   }));
 
   app.get('/api/links', asincronico(async (req, res) => {
@@ -73,4 +102,4 @@ function crearApp({ almacen }) {
   return app;
 }
 
-module.exports = { crearApp };
+module.exports = { crearApp, normalizarUrl };
