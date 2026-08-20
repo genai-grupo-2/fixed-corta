@@ -7,7 +7,8 @@ const test = require('node:test');
 
 const ROOT = __dirname;
 const DB_FILE = path.join(ROOT, 'links.json');
-const SERVER_URL = 'http://127.0.0.1:3000';
+const TEST_PORT = 31234;
+const SERVER_URL = `http://127.0.0.1:${TEST_PORT}`;
 const PRELOAD_FILE = path.join(os.tmpdir(), 'corta-test-preload.js');
 
 const originalDb = fs.existsSync(DB_FILE) ? fs.readFileSync(DB_FILE, 'utf8') : '[]';
@@ -73,7 +74,7 @@ async function stopServer(child) {
 }
 
 async function withServer(fn, options = {}) {
-  const env = { ...process.env };
+  const env = { ...process.env, PORT: String(TEST_PORT), DATABASE_URL: '' };
   if (options.codes) {
     env.CORTA_TEST_CODES = options.codes.join(',');
     env.NODE_OPTIONS = `--require ${PRELOAD_FILE}`;
@@ -212,6 +213,21 @@ test('POST /api/links no persiste códigos duplicados ante creaciones concurrent
   }, { codes: ['dup'] });
 });
 
+test('POST /api/links responde 503 sin datos parciales cuando agota los códigos disponibles', async () => {
+  setLinks([
+    { codigo: 'dup', url: 'https://existente.test', clicks: 0, creado: '2026-03-02T14:11:09.000Z' },
+  ]);
+
+  await withServer(async () => {
+    const response = await postJson('/api/links', { url: 'https://nuevo.test' });
+    const body = await response.json();
+
+    assert.equal(response.status, 503);
+    assert.equal(typeof body.error, 'string');
+    assert.equal(readLinks().length, 1);
+  }, { codes: ['dup'] });
+});
+
 test('GET /:codigo responde con redirección real, Location exacto e incrementa un clic persistido', async () => {
   setLinks([
     { codigo: 'r01', url: 'https://destino.test/ruta?q=1', clicks: 0, creado: '2026-03-02T14:11:09.000Z' },
@@ -223,6 +239,22 @@ test('GET /:codigo responde con redirección real, Location exacto e incrementa 
     assert.equal(response.status, 302);
     assert.equal(response.headers.get('location'), 'https://destino.test/ruta?q=1');
     assert.equal(readLinks()[0].clicks, 1);
+  });
+});
+
+test('GET /:codigo conserva todos los incrementos concurrentes', async () => {
+  setLinks([
+    { codigo: 'cc1', url: 'https://destino.test', clicks: 0, creado: '2026-03-02T14:11:09.000Z' },
+  ]);
+
+  await withServer(async () => {
+    const responses = await Promise.all(Array.from(
+      { length: 20 },
+      () => fetch(`${SERVER_URL}/cc1`, { redirect: 'manual' })
+    ));
+
+    assert.ok(responses.every((response) => response.status === 302));
+    assert.equal(readLinks()[0].clicks, 20);
   });
 });
 
