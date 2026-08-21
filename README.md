@@ -16,7 +16,13 @@
 
 Corta permite crear enlaces cortos, visitar el destino original y consultar cuántos clicks recibió cada enlace.
 
-![Flujo de uso de Corta](docs/demo-corta.svg)
+### Acortador e historial
+
+![Pantalla principal de Corta en producción, con el formulario para acortar URLs y el historial de enlaces](docs/images/corta-inicio.png)
+
+### Estadísticas
+
+![Pantalla de estadísticas de Corta en producción, con clicks, URL original y fecha de creación](docs/images/corta-estadisticas.png)
 
 ## Demo
 
