@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="260" viewBox="0 0 960 260" role="img" aria-labelledby="title desc">
+  <title id="title">Flujo de uso de Corta</title>
+  <desc id="desc">Una URL larga se convierte en un enlace corto, que redirige y registra clics para consultar estadísticas.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f8fafc"/>
+      <stop offset="1" stop-color="#eef2ff"/>
+    </linearGradient>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L9,3 z" fill="#6366f1"/>
+    </marker>
+  </defs>
+  <rect width="960" height="260" rx="24" fill="url(#bg)"/>
+  <g font-family="Arial, Helvetica, sans-serif" text-anchor="middle">
+    <g transform="translate(35 55)">
+      <rect width="240" height="150" rx="18" fill="#fff" stroke="#cbd5e1" stroke-width="2"/>
+      <circle cx="120" cy="43" r="24" fill="#e0e7ff"/>
+      <path d="M106 43h28M120 29v28" stroke="#4f46e5" stroke-width="4" stroke-linecap="round"/>
+      <text x="120" y="91" font-size="18" font-weight="700" fill="#0f172a">Pegá una URL</text>
+      <text x="120" y="119" font-size="14" fill="#64748b">https://sitio.com/ruta-larga</text>
+    </g>
+    <path d="M290 130h55" stroke="#6366f1" stroke-width="3" marker-end="url(#arrow)"/>
+    <g transform="translate(360 55)">
+      <rect width="240" height="150" rx="18" fill="#4f46e5"/>
+      <text x="120" y="58" font-size="32" font-weight="800" fill="#fff">CORTA</text>
+      <text x="120" y="94" font-size="18" font-weight="700" fill="#fff">Creá el enlace</text>
+      <text x="120" y="122" font-size="14" fill="#e0e7ff">corta.app/a3k</text>
+    </g>
+    <path d="M615 130h55" stroke="#6366f1" stroke-width="3" marker-end="url(#arrow)"/>
+    <g transform="translate(685 55)">
+      <rect width="240" height="150" rx="18" fill="#fff" stroke="#cbd5e1" stroke-width="2"/>
+      <path d="M94 64l18-18 14 14 25-25" fill="none" stroke="#16a34a" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="120" y="91" font-size="18" font-weight="700" fill="#0f172a">Compartí y medí</text>
+      <text x="120" y="119" font-size="14" fill="#64748b">Redirecciones y clicks</text>
+    </g>
+  </g>
+</svg>

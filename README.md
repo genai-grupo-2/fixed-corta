@@ -1,6 +1,43 @@
-# Corta
+<p align="center">
+  <img src="corta/public/logo.png" alt="Logo de Corta" width="120">
+</p>
 
-Corta es un acortador interno de URLs. Permite crear enlaces cortos, visitar el destino original y, una vez completada la funcionalidad pendiente, consultar estadísticas de uso.
+<h1 align="center">Corta</h1>
+
+<p align="center">
+  Acortador de URLs con historial y estadísticas de uso.
+</p>
+
+<p align="center">
+  <a href="https://corta-production-ea3e.up.railway.app/"><strong>Probar demo en vivo</strong></a>
+  ·
+  <a href="SPEC.md">Ver especificación</a>
+</p>
+
+Corta permite crear enlaces cortos, visitar el destino original y consultar cuántos clicks recibió cada enlace.
+
+![Flujo de uso de Corta](docs/demo-corta.svg)
+
+## Demo
+
+La aplicación está publicada en [corta-production-ea3e.up.railway.app](https://corta-production-ea3e.up.railway.app/).
+
+1. Pegá una URL que empiece con `http://` o `https://` y presioná **Acortar link**.
+2. Copiá el enlace generado o abrilo desde el historial.
+3. Visitá el enlace corto para comprobar la redirección; cada visita suma un click.
+4. Elegí **Ver estadísticas** o ingresá el código en la [pantalla de estadísticas](https://corta-production-ea3e.up.railway.app/stats.html).
+
+También podés probar la API desde una terminal:
+
+```bash
+# Crear un enlace corto
+curl -X POST https://corta-production-ea3e.up.railway.app/api/links \
+  -H "Content-Type: application/json" \
+  -d '{"url":"https://example.com"}'
+
+# Reemplazar CODIGO por el valor devuelto y consultar sus estadísticas
+curl https://corta-production-ea3e.up.railway.app/api/links/CODIGO/stats
+```
 
 ## Estado del proyecto
 
